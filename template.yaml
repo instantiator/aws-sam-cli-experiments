@@ -1,0 +1,87 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  aws-sam-lambda
+
+  Sample SAM Template for aws-sam-lambda
+
+# Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 20
+
+Resources:
+  IncomingSQS:
+    Type: AWS::SQS::Queue
+
+  OutgoingSNSTopic:
+    Type: AWS::SNS::Topic
+
+  # Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+  # Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+  # API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+  ApiGatewayRespondingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: HelloWorldFunction # this is the directory containing the code
+      Handler: helloworld.ApiGatewayRespondingApp::handleRequest # package.class::method
+      Runtime: java11 # don't think there's a java16 runtime yet
+      Architectures:
+        - x86_64
+      MemorySize: 512
+      Events:
+        ApiGatewayPoke:
+          Type: Api # by creating an Api event type, implicitly a gateway is created
+          Properties:
+            Path: /hello
+            Method: get
+
+  QueueIOFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: HelloWorldFunction # this is the directory containing the code
+      Handler: helloworld.QueueIOApp::handleRequest # package.class::method
+      Runtime: java11 # don't think there's a java16 runtime yet
+      Architectures:
+        - x86_64
+      MemorySize: 512
+      Environment:
+        Variables:
+          SNS_TOPIC_ARN: !Ref OutgoingSNSTopic
+      Events:
+        IncomingMessage:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt IncomingSQS.Arn
+            BatchSize: 10
+      Policies:
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt OutgoingSNSTopic.TopicName
+
+# Implicit resources: https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+Outputs:
+  # ServerlessRestApi is an implicit API created out of the Events key under Serverless::Function
+  ApiGatewayPokeEndpoint:
+    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
+  ApiGatewayRespondingFunction:
+    Description: "Hello World function ARN responding to the API gatway"
+    Value: !GetAtt ApiGatewayRespondingFunction.Arn
+  ApiGatewayRespondingFunctionIamRole:
+    Description: "Implicit IAM Role created for the Hello World function"
+    Value: !GetAtt ApiGatewayRespondingFunctionRole.Arn
+  QueueIOFunction:
+    Description: "Function ARN that reads from the SQS and writes to the SNS Topic"
+    Value: !GetAtt QueueIOFunction.Arn
+  QueueIOFunctionIamRole:
+    Description: "Implicit IAM Role created for the Hello World function"
+    Value: !GetAtt QueueIOFunctionRole.Arn
+  IncomingSQSEndpoint:
+    Description: "The endpoint (ref) for the SQS queue"
+    Value: !Ref IncomingSQS
+  OutgoingSNSTopicName:
+    Description: "Name of the SNS topic to output to"
+    Value: !GetAtt OutgoingSNSTopic.TopicName
+  OutgoingSNSTopicArn:
+    Description: "Outgoing SNS topic ARN"
+    Value: !Ref OutgoingSNSTopic
