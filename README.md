@@ -38,6 +38,13 @@ _If you haven't already,_ create an IAM User with an access key.
 This will be used in a named profile that the AWS CLI and
 IntelliJ AWS Toolkit plugin can use to deploy your application for you.
 
+Put it in a group with the following policies:
+
+* `AdministratorAccess` - allows it to create and deploy resources.
+* `AmazonS3FullAccess` - allows it to create, read and write to S3 buckets.
+
+Now put this user's credentials into a named profile on your system:
+
 * Documentation: [Connect to an AWS account](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/key-tasks.html#key-tasks-first-connect)
 * Edit the `credentials` and `config` files, and add a [named profile](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html).
 * This profile should provide the `aws_access_key_id` and `aws_secret_access_key` for an IAM user in your account (not the root user).
