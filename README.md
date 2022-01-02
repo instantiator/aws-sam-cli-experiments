@@ -1,6 +1,7 @@
 # aws-sam-lambda
 
-This is an experimental repository, a number of scripts will help you to build and deploy a serverless application to AWS or to localstack.
+This is an experimental repository, a number of scripts will help you
+to build and deploy a serverless application to AWS or to localstack.
 
 This serverless application contains:
 
@@ -10,7 +11,10 @@ This serverless application contains:
 * An SNS topic
 * A lambda that reads from the SQS queue and posts to an SNS topic
 
-## HelloWorldFunction
+A number of scripts provided in this repository illustrate how to perform
+common serverless build and deploy actions. 
+
+## HelloWorldFunction directory
 
 This actually contains 2 lambda functions:
 
@@ -23,6 +27,48 @@ Assumed, you already have Docker installed.
 
 * `install-prerequisites-aws-sam-cli.sh`
 * `install-prerequisites-localstack-cli.sh`
+
+## Setup accounts
+
+The [AWS Toolkit](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
+provides an easy way to select a current AWS profile in the bottom right corner of IntelliJ.
+It has a handy menu option called **Edit Credential Files**.
+
+_If you haven't already,_ create an IAM User with an access key.
+This will be used in a named profile that the AWS CLI and
+IntelliJ AWS Toolkit plugin can use to deploy your application for you.
+
+* Documentation: [Connect to an AWS account](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/key-tasks.html#key-tasks-first-connect)
+* Edit the `credentials` and `config` files, and add a [named profile](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html).
+* This profile should provide the `aws_access_key_id` and `aws_secret_access_key` for an IAM user in your account (not the root user).
+
+NB. these files can also be found in: `~/.aws`
+
+## Validate and build
+
+Validate the SAM `template.yaml` against a named AWS profile with:
+
+* `validate-remote.sh`
+
+Either build the project within IntelliJ, or:
+
+```bash
+cd HelloWorldFunction
+gradle build
+```
+
+or
+
+```bash
+sam build
+```
+
+## Testing
+
+```bash
+cd HelloWorldFunction
+gradle test
+```
 
 ## Invoke a lambda locally (without localstack)
 
@@ -42,19 +88,33 @@ curl http://localhost:3000/
 
 ## Build and deploy to AWS
 
-Either, install and use the [AWS Toolkit](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-which provides an Deploy Serverless Application option, or:
+Either, use the [AWS Toolkit](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
+which provides a **Deploy Serverless Application** option:
+
+![The Deploy Serverless Application opion](images/deploy-serverless-application.png)
+
+Alternatively:
 
 * `deploy-remote.sh`
 
 This will offer a guided deployment, and save configuration to: `samconfig.toml`
+
+## Explore AWS resources
+
+After deployment, you'll be given a list of resources in the new stack.
+
+You can also explore the AWS account using the web interface,
+or AWS Explorer in IntelliJ 
+(provided by the [AWS Toolkit](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)).
+
+![AWS Explorer in IntelliJ](images/aws-explorer.png)
 
 ## Build and deploy to localstack
 
 * `start-localstack.sh`
 * `deploy-localstack.sh`
 
-## Logs
+## View remote logs from AWS
 
 Tail remote logs with `sam logs`:
 
@@ -62,25 +122,10 @@ Tail remote logs with `sam logs`:
 sam logs -n QueueIOFunction --stack-name aws-sam-lambda --tail
 ```
 
-## Build
+This uses the logical name of the function (as found in `template.yaml`)
+to look up and tail the appropriate logs from CloudWatch.
 
-```bash
-cd HelloWorldFunction
-gradle build
-```
-
-or
-
-```bash
-sam build
-```
-
-## Testing
-
-```bash
-cd HelloWorldFunction
-gradle test
-```
+You could also do it through the AWS web interface.
 
 ## Cleanup
 
